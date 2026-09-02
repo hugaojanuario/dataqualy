@@ -1,147 +1,79 @@
 # DataQualy
 
-Ferramenta open source para validar a qualidade de dados em projetos de migração entre sistemas.
+Ferramenta open source para auditar migrações entre CSV, Firebird e PostgreSQL.
+Executa regras com PySpark e gera um relatório HTML com contagens e amostras.
 
-O projeto compara dados da origem e do destino, executa regras de qualidade com PySpark e gera um relatório com divergências encontradas.
-
-## Problema que resolve
-
-Durante uma migração, precisamos confirmar se os dados foram convertidos corretamente. A ferramenta ajudará a identificar:
-
-- diferenças na quantidade de registros;
-- registros ausentes no destino;
-- chaves duplicadas;
-- relacionamentos quebrados e registros órfãos;
-- campos obrigatórios nulos;
-- diferenças entre valores;
-- datas inválidas;
-- possíveis problemas de encoding;
-- arquivos e anexos ausentes ou alterados.
-
-## Arquitetura planejada
-
-```text
-Fonte (CSV, PostgreSQL ou Firebird)
-                  │
-                  ▼
-               PySpark
-                  │
-                  ▼
-       Regras configuradas em YAML
-                  │
-                  ▼
-        Relatório de qualidade HTML
-```
-
-## Stack
+## Requisitos
 
 - Python 3.11
 - Java 17
-- PySpark
-- YAML
-- PostgreSQL
-- Firebird
-- Pytest
-- Docker
-- GitHub Actions
+- Drivers JDBC do Firebird e PostgreSQL para conexões com bancos
 
-## Escopo por versão
+## Instalação
 
-### Versão 1 — MVP
+    python -m venv .venv
+    python -m pip install -e ".[dev]"
 
-- comparar dois arquivos CSV;
-- validar contagem de registros;
-- encontrar duplicidades;
-- encontrar registros ausentes;
-- validar campos obrigatórios;
-- gerar um relatório local.
+No Windows:
 
-### Versão 2 — Bancos de dados
+    Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+    .\.venv\Scripts\Activate.ps1
 
-- conexão JDBC com PostgreSQL;
-- comparação entre tabelas;
-- validação de relacionamentos e registros órfãos.
+## Terminal
 
-### Versão 3 — Cenário real de migração
+    dataqualy validate --config configs/example.yml
 
-- conexão com Firebird e PostgreSQL;
-- regras configuráveis em YAML;
-- tratamento de tipos, datas e encoding.
+Também funciona com:
 
-### Versão 4 — Distribuição
+    python -m dataqualy validate --config configs/example.yml
 
-- interface de linha de comando;
-- relatório HTML;
-- execução com Docker;
-- testes automatizados no GitHub Actions.
+O comando retorna código 0 quando aprovado e 1 quando encontra divergências.
+O relatório padrão fica em reports/validation-report.html.
 
-### Versão 5 — Evoluções
+## Interface gráfica
 
-- validação de anexos;
-- comparação de arquivos por hash;
-- histórico de execuções;
-- dashboard de qualidade.
+    dataqualy gui
 
-## Estrutura planejada
+A interface recebe host, porta, banco, usuário, senha, tabela, chave e drivers JDBC.
+As senhas ficam somente em memória e não entram no relatório.
 
-```text
-migration-data-quality/
-├── configs/
-│   └── example.yml
-├── data/
-│   ├── source/
-│   └── target/
-├── reports/
-├── src/
-│   └── migration_quality/
-├── tests/
-├── .gitignore
-├── pyproject.toml
-└── README.md
-```
+## Configuração e regras
 
-## Exemplo de configuração
+Use type: csv para arquivos. Para bancos use type: jdbc, engine: firebird ou
+postgresql e informe exatamente table ou query. Prefira password_env; nunca
+versione senha.
 
-```yaml
-migration:
-  name: example_migration
+Regras disponíveis:
 
-checks:
-  - name: total_records
-    rule: count_matches
-    source:
-      file: data/source/records.csv
-    target:
-      file: data/target/records.csv
+- chaves duplicadas e registros ausentes;
+- diferenças entre valores;
+- campos obrigatórios;
+- domínios e expressões regulares;
+- datas inválidas;
+- registros órfãos;
+- caracteres inválidos e prefixos antes de RTF.
 
-  - name: duplicate_ids
-    rule: unique
-    target:
-      file: data/target/records.csv
-      key: id
-```
+Veja configs/jdbc-example.yml e configs/rules-example.yml.
 
-## Uso planejado
+## Testes
 
-```bash
-dataqualy validate --config configs/example.yml
-```
+    pytest -v
 
-Saída:
+## Executável Windows
 
-```text
-reports/validation-report.html
-```
+    Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+    .\scripts\build-executable.ps1
+
+O resultado será dist\dataqualy.exe. O computador ainda precisa de Java 17 e
+dos drivers JDBC selecionados na interface.
 
 ## Privacidade
 
-Este repositório não utiliza dados, credenciais, nomes, estruturas proprietárias ou códigos de clientes. Os exemplos serão genéricos e criados exclusivamente para demonstração.
-
-## Status
-
-Projeto em desenvolvimento. A primeira entrega será a comparação de dois arquivos CSV utilizando PySpark.
+Dados, credenciais, nomes de clientes, estruturas proprietárias e arquivos reais
+não devem entrar no repositório. Use somente exemplos genéricos e sintéticos.
 
 ## Licença
 
-Será definida antes da primeira publicação estável.
+MIT.
 
+<!-- @hugaojanuario -->

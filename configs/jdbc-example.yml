@@ -1,0 +1,29 @@
+migration:
+  name: example_database_migration
+source:
+  type: jdbc
+  engine: firebird
+  host: localhost
+  port: 3050
+  database: C:/data/source.fdb
+  user: SYSDBA
+  password_env: DATAQUALY_SOURCE_PASSWORD
+  table: SOURCE_RECORDS
+  jar: C:/drivers/jaybird.jar
+target:
+  type: jdbc
+  engine: postgresql
+  host: localhost
+  port: 5432
+  database: target_database
+  user: validator
+  password_env: DATAQUALY_TARGET_PASSWORD
+  table: target_records
+  jar: C:/drivers/postgresql.jar
+key: id
+checks:
+  duplicate_keys: true
+  missing_records: true
+  compare_columns: [status]
+report:
+  sample_size: 20

@@ -1,0 +1,39 @@
+migration:
+  name: example_rules
+source:
+  type: csv
+  path: data/source/records.csv
+target:
+  type: csv
+  path: data/target/records.csv
+key: id
+checks:
+  duplicate_keys: true
+  missing_records: true
+  compare_columns: [status]
+  rules:
+    - name: Required target fields
+      rule: not_null
+      dataset: target
+      columns: [id, name, status]
+    - name: Allowed status
+      rule: allowed_values
+      dataset: target
+      column: status
+      allowed: [active, inactive]
+    - name: Numeric document
+      rule: pattern
+      dataset: target
+      column: document
+      pattern: "^[0-9]{11}$"
+    - name: Valid reception date
+      rule: valid_date
+      dataset: target
+      column: reception_date
+      format: "dd/MM/yyyy HH:mm:ss"
+    - name: Suspicious converted text
+      rule: suspicious_text
+      dataset: target
+      columns: [notes]
+report:
+  sample_size: 20

@@ -2,6 +2,7 @@ import argparse
 from collections.abc import Sequence
 
 from dataqualy.config import load_config
+from dataqualy.report import write_html_report
 from dataqualy.validator import run_validation
 
 
@@ -22,6 +23,11 @@ def build_parser() -> argparse.ArgumentParser:
         required=True,
         help="Caminho do arquivo YAML de configuração.",
     )
+    validate.add_argument(
+        "--report",
+        default="reports/validation-report.html",
+        help="Caminho do relatório HTML.",
+    )
     return parser
 
 
@@ -31,8 +37,15 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if args.command == "validate":
         config = load_config(args.config)
-        run_validation(config)
-        return 0
+        report = run_validation(config)
+        output = write_html_report(report, args.report)
+        print(f"Relatório: {output.resolve()}")
+        print(
+            "Resultado: aprovado"
+            if report.passed
+            else f"Resultado: {report.issue_count} divergência(s)"
+        )
+        return 0 if report.passed else 1
 
     return 2
 

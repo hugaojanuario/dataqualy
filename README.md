@@ -124,7 +124,7 @@ checks:
 ## Uso planejado
 
 ```bash
-migration-quality validate --config configs/example.yml
+dataqualy validate --config configs/example.yml
 ```
 
 Saída:

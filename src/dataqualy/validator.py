@@ -1,7 +1,5 @@
 from typing import Any
 
-import dataqualy
-from dataqualy import checks
 from dataqualy.checks import (
     find_duplicate_keys,
     find_missing_records,
@@ -21,17 +19,17 @@ def run_validation(config: dict[str, Any]) -> None:
         source = read_records(spark, config["source"]["path"])
         target = read_records(spark, config["target"]["path"])
         key = config["key"]
-        checks = config["checks"]
+        checks_config = config["checks"]
 
-        if checks["duplicate_keys"]:
+        if checks_config["duplicate_keys"]:
             print("\nChaves duplicadas")
             find_duplicate_keys(target, key).show()
 
-        if checks["missing_records"]
+        if checks_config["missing_records"]:
             print("\nRegistros faltantes")
             find_missing_records(source, target, key).show()
 
-        for column in checks["compare_columns"]:
+        for column in checks_config["compare_columns"]:
             print(f"\nDiferenças na coluna '{column}'")
             find_value_differences(source, target, key, column).show()
     finally:

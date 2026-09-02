@@ -1,0 +1,16 @@
+migration:
+  name: example_migration
+
+source:
+  path: data/source/records.csv
+
+target:
+  path: data/target/records.csv
+
+key: id
+
+checks:
+  duplicate_keys: true
+  missing_records: true
+  compare_columns:
+    - status

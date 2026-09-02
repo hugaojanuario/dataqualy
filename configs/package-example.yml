@@ -1,0 +1,35 @@
+mode: package
+
+migration:
+  name: example_pre_import_package
+
+package:
+  files:
+    - path: export/01-protocols.csv
+      delimiter: ";"
+      encoding: utf-8
+      expected_columns:
+        - id_protocol
+        - number
+        - type
+        - reception_date
+
+    - path: export/03-parts.csv
+      delimiter: ";"
+      encoding: utf-8
+      expected_columns:
+        - id_protocol
+        - id_part
+        - name
+        - document
+
+  attachments:
+    manifest: export/18-attachments.csv
+    root: export/attachments
+    encoding: utf-8
+    path_column: relative_path
+    size_column: size_bytes
+    hash_column: sha256
+    algorithm: sha256
+
+# @hugaojanuario

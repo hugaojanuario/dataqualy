@@ -55,6 +55,26 @@ Regras disponíveis:
 
 Veja configs/jdbc-example.yml e configs/rules-example.yml.
 
+## Validação de pacote antes da importação
+
+O modo `package` verifica os arquivos extraídos antes de carregar dados no banco:
+
+- existência de cada CSV;
+- codificação válida e ausência de BOM UTF-8;
+- nomes e ordem exata das colunas;
+- existência dos anexos relacionados no manifesto;
+- proteção contra caminhos que saiam da pasta de anexos;
+- tamanho e hash dos anexos, quando informados.
+
+Copie `configs/package-example.yml`, ajuste os caminhos e cabeçalhos para o
+layout utilizado e execute:
+
+    dataqualy validate --config configs/package-example.yml
+
+O manifesto de anexos deve possuir a coluna configurada em `path_column`. As
+colunas de tamanho e hash são opcionais; quando preenchidas, também serão
+comparadas com o arquivo físico.
+
 ## Testes
 
     pytest -v

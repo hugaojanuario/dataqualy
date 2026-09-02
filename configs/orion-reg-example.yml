@@ -1,0 +1,65 @@
+migration:
+  name: example_orion_reg_package
+
+datasets:
+  protocols:
+    type: csv
+    path: data/example/01-protocols.csv
+  parts:
+    type: csv
+    path: data/example/03-parts.csv
+  addresses:
+    type: csv
+    path: data/example/04-addresses.csv
+  registrations:
+    type: csv
+    path: data/example/05-registrations.csv
+  notes:
+    type: csv
+    path: data/example/12-notes.csv
+
+checks:
+  rules:
+    - name: Unique protocol identifiers
+      rule: unique
+      dataset: protocols
+      key: id_protocol
+    - name: Required protocol fields
+      rule: not_null
+      dataset: protocols
+      columns: [id_protocol, number, type, reception_date]
+    - name: Allowed protocol type
+      rule: allowed_values
+      dataset: protocols
+      column: type
+      allowed: [TD, PJ]
+    - name: Valid reception date
+      rule: valid_date
+      dataset: protocols
+      column: reception_date
+      format: "dd/MM/yyyy HH:mm:ss"
+    - name: Parts without protocol
+      rule: no_orphans
+      dataset: parts
+      parent_dataset: protocols
+      child_key: id_protocol
+      parent_key: id_protocol
+    - name: Addresses without part
+      rule: no_orphans
+      dataset: addresses
+      parent_dataset: parts
+      child_key: [id_protocol, id_part]
+      parent_key: [id_protocol, id_part]
+    - name: Registrations without protocol
+      rule: no_orphans
+      dataset: registrations
+      parent_dataset: protocols
+      child_key: id_protocol
+      parent_key: id_protocol
+    - name: Invalid converted notes
+      rule: suspicious_text
+      dataset: notes
+      columns: [text]
+
+report:
+  sample_size: 20

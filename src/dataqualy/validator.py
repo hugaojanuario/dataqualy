@@ -10,6 +10,7 @@ from dataqualy.checks import (
 )
 from dataqualy.datasource import collect_jars, read_dataset
 from dataqualy.models import CheckResult, ValidationReport
+from dataqualy.rules import execute_rule
 from dataqualy.spark import create_spark_session
 
 
@@ -36,31 +37,27 @@ def _evaluate(
         if issue_count == 0
         else f"{issue_count} divergência(s) encontrada(s)."
     )
-    return CheckResult(
-        name=name,
-        rule=rule,
-        status=status,
-        issue_count=issue_count,
-        message=message,
-        sample=sample,
-    )
+    return CheckResult(name, rule, status, issue_count, message, sample)
 
 
 def run_validation(config: dict[str, Any]) -> ValidationReport:
-    """Executa as validações definidas na configuração."""
+    """Executa regras legadas e regras configuráveis na mesma execução."""
     migration_name = config.get("migration", {}).get("name", "validation")
     sample_size = int(config.get("report", {}).get("sample_size", 20))
-    report = ValidationReport(
-        migration_name=migration_name,
-        started_at=datetime.now(),
-    )
-    jars = collect_jars(config["source"], config["target"])
+    report = ValidationReport(migration_name, datetime.now())
+    source_config = config["source"]
+    target_config = config["target"]
+    jars = collect_jars(source_config, target_config)
     spark = create_spark_session(jars)
     spark.sparkContext.setLogLevel("ERROR")
 
     try:
-        source = read_dataset(spark, config["source"])
-        target = read_dataset(spark, config["target"])
+        datasets = {
+            "source": read_dataset(spark, source_config),
+            "target": read_dataset(spark, target_config),
+        }
+        source = datasets["source"]
+        target = datasets["target"]
         key = config["key"]
         checks_config = config["checks"]
 
@@ -73,7 +70,6 @@ def run_validation(config: dict[str, Any]) -> ValidationReport:
                     sample_size=sample_size,
                 )
             )
-
         if checks_config.get("missing_records", False):
             report.results.append(
                 _evaluate(
@@ -83,13 +79,21 @@ def run_validation(config: dict[str, Any]) -> ValidationReport:
                     sample_size=sample_size,
                 )
             )
-
         for column in checks_config.get("compare_columns", []):
             report.results.append(
                 _evaluate(
                     find_value_differences(source, target, key, column),
                     name=f"Diferenças na coluna {column}",
                     rule="value_differences",
+                    sample_size=sample_size,
+                )
+            )
+        for rule_config in checks_config.get("rules", []):
+            report.results.append(
+                _evaluate(
+                    execute_rule(rule_config, datasets),
+                    name=rule_config.get("name", rule_config["rule"]),
+                    rule=rule_config["rule"],
                     sample_size=sample_size,
                 )
             )

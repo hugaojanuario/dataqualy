@@ -8,8 +8,8 @@ from dataqualy.checks import (
     find_missing_records,
     find_value_differences,
 )
+from dataqualy.datasource import collect_jars, read_dataset
 from dataqualy.models import CheckResult, ValidationReport
-from dataqualy.reader import read_records
 from dataqualy.spark import create_spark_session
 
 
@@ -54,12 +54,13 @@ def run_validation(config: dict[str, Any]) -> ValidationReport:
         migration_name=migration_name,
         started_at=datetime.now(),
     )
-    spark = create_spark_session()
+    jars = collect_jars(config["source"], config["target"])
+    spark = create_spark_session(jars)
     spark.sparkContext.setLogLevel("ERROR")
 
     try:
-        source = read_records(spark, config["source"]["path"])
-        target = read_records(spark, config["target"]["path"])
+        source = read_dataset(spark, config["source"])
+        target = read_dataset(spark, config["target"])
         key = config["key"]
         checks_config = config["checks"]
 

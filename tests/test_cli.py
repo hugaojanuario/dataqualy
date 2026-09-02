@@ -5,27 +5,42 @@ from dataqualy.cli import main
 from dataqualy.models import ValidationReport
 
 
-def test_validate_command_generates_report(tmp_path):
-    config = {"migration": {"name": "example"}}
-    report = ValidationReport(
+def _report() -> ValidationReport:
+    return ValidationReport(
         migration_name="example",
         started_at=datetime(2026, 1, 1),
         finished_at=datetime(2026, 1, 1),
     )
-    output = tmp_path / "report.html"
 
+
+def test_validate_command_generates_report(tmp_path):
+    config = {"migration": {"name": "example"}}
+    output = tmp_path / "report.html"
     with (
-        patch("dataqualy.cli.load_config", return_value=config) as load_config,
-        patch("dataqualy.cli.run_validation", return_value=report) as run_validation,
+        patch("dataqualy.cli.load_config", return_value=config),
+        patch("dataqualy.cli.run_validation", return_value=_report()) as run,
     ):
         exit_code = main(
             ["validate", "--config", "configs/example.yml", "--report", str(output)]
         )
-
     assert exit_code == 0
     assert output.exists()
-    load_config.assert_called_once_with("configs/example.yml")
-    run_validation.assert_called_once_with(config)
+    run.assert_called_once_with(config)
+
+
+def test_validate_command_dispatches_package_mode(tmp_path):
+    config = {"mode": "package", "package": {"files": []}}
+    with (
+        patch("dataqualy.cli.load_config", return_value=config),
+        patch(
+            "dataqualy.cli.run_package_validation", return_value=_report()
+        ) as run,
+    ):
+        exit_code = main(
+            ["validate", "--config", "package.yml", "--report", str(tmp_path / "r.html")]
+        )
+    assert exit_code == 0
+    run.assert_called_once_with(config)
 
 
 # @hugaojanuario

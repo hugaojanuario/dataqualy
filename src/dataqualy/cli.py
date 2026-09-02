@@ -2,6 +2,7 @@ import argparse
 from collections.abc import Sequence
 
 from dataqualy.config import load_config
+from dataqualy.package_validator import run_package_validation
 from dataqualy.report import write_html_report
 from dataqualy.validator import run_validation
 
@@ -29,7 +30,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         launch_gui()
         return 0
     if args.command == "validate":
-        report = run_validation(load_config(args.config))
+        config = load_config(args.config)
+        report = (
+            run_package_validation(config)
+            if config.get("mode") == "package"
+            else run_validation(config)
+        )
         output = write_html_report(report, args.report)
         print(f"Relatório: {output.resolve()}")
         print(
